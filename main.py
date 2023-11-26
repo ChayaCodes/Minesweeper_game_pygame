@@ -1,5 +1,8 @@
+import json
 import math
 from random import random
+from sqlite3 import Date
+
 import pygame
 import random
 from Board import Board
@@ -7,16 +10,51 @@ from Cell import Cell
 from Draw import Draw
 from MineCell import MineCell
 from RevealedCell import RevealedCell
-
-
-
+from datetime import datetime
 
 def not_all_revealed_or_flagged():
-    for row in board.board:
-        for cell in row:
-            if not isinstance(cell, MineCell) and not isinstance(cell, RevealedCell):
-                return True
-    return False
+    return any(
+        not isinstance(cell, MineCell) and not isinstance(cell, RevealedCell) for row in board.board for cell in row)
+
+
+def add_game_data(data_file, game_data):
+        try:
+            # Open the file in read mode.
+            f = open(data_file, "r+")
+        except FileNotFoundError:
+            # If the file does not exist, create a new one.
+            f = open(data_file, "w")
+            # תוסיף לדף מערך ריק
+            json.dump([], f)
+            f.close()
+            f = open(data_file, "r+")
+        try:
+            data = json.load(f)
+        except json.decoder.JSONDecodeError:
+            # If the file is empty, initialize it with an empty list.
+            data = []
+
+        # Check if the existing data structure is compatible.
+        if not isinstance(data, list):
+            raise ValueError("The existing data is not in a list format.")
+
+        # Try to convert the 'date' field to a JSON-compatible format
+        try:
+            game_data["date"] = game_data["date"].strftime("%Y-%m-%d %H:%M:%S")
+        except TypeError:
+            # If the conversion fails, log an error and skip the game data
+            print(f"Failed to convert date to JSON format: {game_data['date']}")
+            return
+
+        # Update the existing data.
+        data.append(game_data)
+
+        # Write the updated data back to the file.
+        f.seek(0)
+        json.dump(data, f)
+
+        # Close the file
+        f.close()
 
 
 def game_over():
@@ -26,6 +64,7 @@ def game_over():
         for cell in row:
             if isinstance(cell, MineCell):
                 draw.draw_mine(draw.screen, cell)
+                pygame.display.flip()
 
     # תעבור על הלוח מהאצע לפינות בצורה רנדומלית
     # ותחשוף את התאים
@@ -35,12 +74,15 @@ def game_over():
 
         draw.draw_grid(board)
     # תציג הודעה "הפסדת"
-    font = pygame.font.SysFont("Arial", 50)
-    text_surface = font.render("You Lost", True, Draw.RED)
-    text_rect = text_surface.get_rect()
-    text_rect.center = (250, 250)
-    draw.screen.blit(text_surface, text_rect)
-    pygame.display.flip()
+
+    # תוסיף תאריך כולל שעות ודקות לקובץ data.json
+    game_data = {"date": datetime.now(), "win": False}
+
+    add_game_data("data.json", game_data)
+    draw.draw_grid(board)
+
+    # Draw the results.
+    draw.draw_results("data.json")
 
 
 def handle_click_cell(cell):
@@ -54,7 +96,8 @@ def handle_click_cell(cell):
     else:
         board.reveal_cell(cell)
         draw.draw_grid(board)
-
+        if board.has_all_revealed():
+            game_win()
 
 
 def handle_right_click_cell(cell):
@@ -63,16 +106,11 @@ def handle_right_click_cell(cell):
 
 
 def game_win():
-    draw.game_ended = True
-    # תציג הודעה "ניצחת"
-    if not not_all_revealed_or_flagged():
-        return
-    font = pygame.font.SysFont("Arial", 50)
-    text_surface = font.render("You Won", True, Draw.GREEN)
-    text_rect = text_surface.get_rect()
-    text_rect.center = (250, 250)
-    draw.screen.blit(text_surface, text_rect)
-    pygame.display.flip()
+    print("game win")
+    game_data = {"date": datetime.now(), "win": True}
+    add_game_data("data.json", game_data)
+    draw.draw_grid(board)
+    draw.draw_results("data.json")
 
 
 def handle_click(mouse_x, mouse_y, left_click=True):
@@ -101,6 +139,7 @@ def handle_first_click(x, y):
 def draw_grid(self):
     draw.draw_grid(self.board)
 
+
 is_first_click = True
 board = Board(10, 20)
 draw = Draw(500, 500, board)
@@ -109,8 +148,6 @@ draw.draw_grid(board)
 finish = False
 draw.game_ended = False
 while not finish:
-    if board.has_all_revealed() and not draw.game_ended:
-        game_win()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             finish = True

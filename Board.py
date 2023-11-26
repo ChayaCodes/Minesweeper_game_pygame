@@ -27,6 +27,7 @@ class Board:
         return count
 
     def reveal_cell(self, cell):
+
         if isinstance(cell, MineCell):
             return
         if isinstance(cell, RevealedCell):
