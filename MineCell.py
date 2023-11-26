@@ -1,4 +1,5 @@
 from Cell import Cell
+from Draw import Draw
 
 
 class MineCell(Cell):
@@ -7,3 +8,7 @@ class MineCell(Cell):
 
     def draw(self, screen):
         super().draw(screen)
+        # אם המשחק נגמר תציג את המוקש
+        if Draw.game_ended:
+            Draw.draw_mine(screen, self)
+

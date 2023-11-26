@@ -6,9 +6,9 @@ from Draw import Draw
 
 class RevealedCell(Cell):
     COLOR = Draw.WHITE
-    def __init__(self, cell, num_mines):
-        super().__init__(cell.row, cell.col)
-        self.num_mines = num_mines
+
+    def __init__(self, cell):
+        super().__init__(cell.row, cell.col, cell.num_mines)
 
 
     def draw(self, screen):

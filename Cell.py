@@ -9,12 +9,15 @@ class Cell:
     COLOR_HIDDEN_CELL = (0, 255, 0)
 
     @abstractmethod
-    def __init__(self, row, col):
+    def __init__(self, row, col, num_mines=0):
         self.row = row
         self.col = col
         self.x = col * self.SIZE_CELL
         self.y = row * self.SIZE_CELL
-        self.isFlagged = False
+        self.is_flagged = False
+        self.num_mines = num_mines
+        if self.num_mines == 0:
+            print(f"cell {self.row},{self.col} has 0 mines")
 
     @abstractmethod
     def draw(self, screen):
@@ -25,17 +28,12 @@ class Cell:
         pygame.draw.rect(screen, Draw.BLACK,
                          pygame.Rect(self.x, self.y, self.SIZE_CELL, self.SIZE_CELL), 2)
 
-        if self.isFlagged:
-            # ציור הדגל
-            pygame.draw.rect(screen, Draw.BLACK,
-                             pygame.Rect(self.x + self.SIZE_CELL / 4, self.y + self.SIZE_CELL / 4,
-                                         self.SIZE_CELL / 2, self.SIZE_CELL / 2))
-            pygame.draw.rect(screen, Draw.RED,
-                             pygame.Rect(self.x + self.SIZE_CELL / 4 + 2, self.y + self.SIZE_CELL / 4 + 2,
-                                         self.SIZE_CELL / 2 - 4, self.SIZE_CELL / 2 - 4))
-            pygame.draw.rect(screen, Draw.BLACK,
-                             pygame.Rect(self.x + self.SIZE_CELL / 4 + 2, self.y + self.SIZE_CELL / 4 + 2,
-                                         self.SIZE_CELL / 2 - 4, self.SIZE_CELL / 2 - 4), 2)
+        if self.is_flagged:
+            Draw.draw_flag(screen, self)
+
+
+
+
 
 
 
